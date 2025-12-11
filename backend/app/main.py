@@ -27,13 +27,30 @@ frontend_url = os.getenv("FRONTEND_URL", "")
 if frontend_url:
     frontend_urls.append(frontend_url)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=frontend_urls,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Permitir também qualquer origem do Vercel (padrão: *.vercel.app)
+# Para debug, podemos permitir todas as origens temporariamente
+allow_all = os.getenv("ALLOW_ALL_ORIGINS", "true").lower() == "true"
+
+if allow_all:
+    # Permitir todas as origens (sem credentials para funcionar)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
+else:
+    # Usar lista específica de origens (com credentials)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=frontend_urls,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
 
 class AnalysisRequest(BaseModel):
     before_image_url: str

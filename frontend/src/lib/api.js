@@ -1,5 +1,10 @@
 // api.js - Chamadas para backend Python
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// Normalizar URL (remover barra final se existir)
+const getApiUrl = () => {
+  const url = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+  return url.replace(/\/+$/, '') // Remove barras finais
+}
+const API_URL = getApiUrl()
 
 export async function analyzeImages(beforeFile, afterFile, procedures, patientId = null) {
   // Upload imagens para Supabase Storage primeiro
