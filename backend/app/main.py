@@ -21,11 +21,11 @@ app = FastAPI(title="GlowMetrics Analysis API")
 frontend_urls = [
     "http://localhost:5173",
     "http://localhost:3000",
-    os.getenv("FRONTEND_URL", ""),
 ]
-# Adicionar URLs do Vercel/Netlify se existirem
-if os.getenv("FRONTEND_URL"):
-    frontend_urls.append(os.getenv("FRONTEND_URL"))
+# Adicionar URL do frontend se configurada
+frontend_url = os.getenv("FRONTEND_URL", "")
+if frontend_url:
+    frontend_urls.append(frontend_url)
 
 app.add_middleware(
     CORSMiddleware,
