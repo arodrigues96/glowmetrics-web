@@ -5,11 +5,27 @@ export async function analyzeImages(beforeFile, afterFile, procedures, patientId
   // Upload imagens para Supabase Storage primeiro
   const { supabase } = await import('./supabase')
   
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:4',message:'analyzeImages entry',data:{patientId,proceduresCount:procedures?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+  
   // Verificar autenticação
   const { data: { user }, error: authError } = await supabase.auth.getUser()
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:10',message:'auth check result',data:{hasUser:!!user,userId:user?.id,authError:authError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+  
   if (authError || !user) {
     throw new Error('Usuário não autenticado')
   }
+  
+  // Verificar sessão atual
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:16',message:'session check',data:{hasSession:!!session,sessionUserId:session?.user?.id,userMatches:user.id===session?.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+  // #endregion
   
   const beforeFileName = `photos/${Date.now()}_before.jpg`
   const afterFileName = `photos/${Date.now()}_after.jpg`
@@ -19,12 +35,20 @@ export async function analyzeImages(beforeFile, afterFile, procedures, patientId
     .from('photos')
     .upload(beforeFileName, beforeFile)
   
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:23',message:'storage upload before',data:{success:!beforeError,error:beforeError?.message,path:beforeFileName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
+  
   if (beforeError) throw beforeError
   
   // Upload depois
   const { data: afterData, error: afterError } = await supabase.storage
     .from('photos')
     .upload(afterFileName, afterFile)
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:30',message:'storage upload after',data:{success:!afterError,error:afterError?.message,path:afterFileName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   
   if (afterError) throw afterError
   
@@ -38,32 +62,52 @@ export async function analyzeImages(beforeFile, afterFile, procedures, patientId
     .getPublicUrl(afterFileName)
   
   // Salvar fotos na tabela photos (para RLS)
+  const insertDataBefore = {
+    storage_path: beforeFileName,
+    photo_type: 'before',
+    user_id: user.id,
+    patient_id: patientId
+  }
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:48',message:'before insert data',data:{userId:insertDataBefore.user_id,patientId:insertDataBefore.patient_id,storagePath:insertDataBefore.storage_path},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  // #endregion
+  
   const { data: beforePhoto, error: beforePhotoError } = await supabase
     .from('photos')
-    .insert({
-      storage_path: beforeFileName,
-      photo_type: 'before',
-      user_id: user.id,
-      patient_id: patientId
-    })
+    .insert(insertDataBefore)
     .select()
     .single()
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:55',message:'before photo insert result',data:{success:!beforePhotoError,error:beforePhotoError?.message,errorCode:beforePhotoError?.code,errorDetails:beforePhotoError?.details,photoId:beforePhoto?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   
   if (beforePhotoError) {
     console.error('Erro ao salvar foto antes:', beforePhotoError)
     // Não interrompe o fluxo, mas loga o erro
   }
   
+  const insertDataAfter = {
+    storage_path: afterFileName,
+    photo_type: 'after',
+    user_id: user.id,
+    patient_id: patientId
+  }
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:68',message:'after insert data',data:{userId:insertDataAfter.user_id,patientId:insertDataAfter.patient_id,storagePath:insertDataAfter.storage_path},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  // #endregion
+  
   const { data: afterPhoto, error: afterPhotoError } = await supabase
     .from('photos')
-    .insert({
-      storage_path: afterFileName,
-      photo_type: 'after',
-      user_id: user.id,
-      patient_id: patientId
-    })
+    .insert(insertDataAfter)
     .select()
     .single()
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:75',message:'after photo insert result',data:{success:!afterPhotoError,error:afterPhotoError?.message,errorCode:afterPhotoError?.code,errorDetails:afterPhotoError?.details,photoId:afterPhoto?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   
   if (afterPhotoError) {
     console.error('Erro ao salvar foto depois:', afterPhotoError)
