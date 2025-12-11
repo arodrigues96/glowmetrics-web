@@ -111,6 +111,17 @@ export async function analyzeImages(beforeFile, afterFile, procedures, patientId
 }
 
 export async function generatePDF(beforeUrl, afterUrl, analysisResults) {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:113',message:'generatePDF entry',data:{beforeUrl,beforeUrlLength:beforeUrl?.length||0,beforeUrlEmpty:!beforeUrl||beforeUrl.trim()==='',afterUrl,afterUrlLength:afterUrl?.length||0,afterUrlEmpty:!afterUrl||afterUrl.trim()==='',hasAnalysisResults:!!analysisResults},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+  // #endregion
+  
+  if (!beforeUrl || beforeUrl.trim() === '') {
+    throw new Error('URL da foto antes está vazia ao gerar PDF')
+  }
+  if (!afterUrl || afterUrl.trim() === '') {
+    throw new Error('URL da foto depois está vazia ao gerar PDF')
+  }
+  
   const response = await fetch(`${API_URL}/api/generate-pdf`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

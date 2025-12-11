@@ -92,27 +92,65 @@ export default function AnalysisNew() {
       const analysisResult = await analyzeImages(beforeFile, afterFile, procedures, finalPatientId)
       
       // Obter URLs das imagens do Supabase Storage para gerar PDF
-      // (as URLs não vêm na resposta do backend, precisamos obtê-las novamente)
+      // Usar os IDs das fotos que foram retornados pela análise
       const { supabase } = await import('../lib/supabase')
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Usuário não autenticado')
       
-      // Buscar as fotos mais recentes deste paciente
-      const { data: photos, error: photosError } = await supabase
-        .from('photos')
-        .select('storage_path, photo_type')
-        .eq('user_id', user.id)
-        .eq('patient_id', finalPatientId)
-        .order('created_at', { ascending: false })
-        .limit(2)
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AnalysisNew.jsx:94',message:'before fetching photos',data:{beforePhotoId:analysisResult.before_photo_id,afterPhotoId:analysisResult.after_photo_id,patientId:finalPatientId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      // #endregion
       
-      if (photosError) throw photosError
+      // Buscar as fotos usando os IDs retornados pela análise
+      let beforePhoto, afterPhoto
       
-      const beforePhoto = photos?.find(p => p.photo_type === 'before')
-      const afterPhoto = photos?.find(p => p.photo_type === 'after')
+      if (analysisResult.before_photo_id && analysisResult.after_photo_id) {
+        // Buscar fotos pelos IDs
+        const { data: beforePhotoData, error: beforeError } = await supabase
+          .from('photos')
+          .select('storage_path, photo_type')
+          .eq('id', analysisResult.before_photo_id)
+          .single()
+        
+        const { data: afterPhotoData, error: afterError } = await supabase
+          .from('photos')
+          .select('storage_path, photo_type')
+          .eq('id', analysisResult.after_photo_id)
+          .single()
+        
+        if (beforeError || afterError) {
+          console.error('Erro ao buscar fotos:', { beforeError, afterError })
+          throw new Error('Erro ao buscar fotos do banco')
+        }
+        
+        beforePhoto = beforePhotoData
+        afterPhoto = afterPhotoData
+      } else {
+        // Fallback: buscar as fotos mais recentes deste paciente
+        const { data: photos, error: photosError } = await supabase
+          .from('photos')
+          .select('storage_path, photo_type')
+          .eq('user_id', user.id)
+          .eq('patient_id', finalPatientId)
+          .order('created_at', { ascending: false })
+          .limit(2)
+        
+        if (photosError) throw photosError
+        
+        beforePhoto = photos?.find(p => p.photo_type === 'before')
+        afterPhoto = photos?.find(p => p.photo_type === 'after')
+      }
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AnalysisNew.jsx:125',message:'photos found',data:{hasBeforePhoto:!!beforePhoto,hasAfterPhoto:!!afterPhoto,beforeStoragePath:beforePhoto?.storage_path,afterStoragePath:afterPhoto?.storage_path},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      // #endregion
       
       if (!beforePhoto || !afterPhoto) {
         throw new Error('Fotos não encontradas para gerar PDF')
+      }
+      
+      if (!beforePhoto.storage_path || !afterPhoto.storage_path) {
+        throw new Error('Caminhos de armazenamento das fotos não encontrados')
       }
       
       const { data: { publicUrl: beforeUrl } } = supabase.storage
@@ -123,8 +161,13 @@ export default function AnalysisNew() {
         .from('photos')
         .getPublicUrl(afterPhoto.storage_path)
       
-      if (!beforeUrl || !afterUrl) {
-        throw new Error('URLs das fotos não encontradas')
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AnalysisNew.jsx:145',message:'URLs obtained',data:{beforeUrl,beforeUrlLength:beforeUrl?.length||0,afterUrl,afterUrlLength:afterUrl?.length||0,beforeUrlEmpty:!beforeUrl||beforeUrl.trim()==='',afterUrlEmpty:!afterUrl||afterUrl.trim()===''},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      // #endregion
+      
+      if (!beforeUrl || !afterUrl || beforeUrl.trim() === '' || afterUrl.trim() === '') {
+        console.error('URLs obtidas:', { beforeUrl, afterUrl, beforeStoragePath: beforePhoto.storage_path, afterStoragePath: afterPhoto.storage_path })
+        throw new Error('URLs das fotos não encontradas ou vazias')
       }
 
       // Gerar PDF
