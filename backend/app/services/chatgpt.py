@@ -50,12 +50,15 @@ def analyze_with_chatgpt(before_path, after_path, procedures=None):
         print("   ✓ Cliente OpenAI inicializado")
         
         # Construir prompt com procedimentos
+        print("📝 Construindo prompt...")
         procedures_text = ""
         if procedures and len(procedures) > 0:
             procedures_list = ", ".join(procedures)
             procedures_text = f"\n\nProcedimentos realizados: {procedures_list}"
+        print(f"   ✓ Procedimentos: {procedures}")
         
         # Prompt estruturado - explícito e objetivo
+        print("   📄 Criando prompt completo...")
         prompt_text = f"""Para cada área facial, analise e descreva EXATAMENTE o que mudou da foto ANTES para a foto DEPOIS:{procedures_text}
 
 1. REGIÃO FRONTAL (testa):
@@ -119,21 +122,41 @@ REGRAS FINAIS:
 Retorne APENAS o JSON, sem texto adicional."""
         
         # 1. Upload das imagens
-        with open(before_path, "rb") as f_before, open(after_path, "rb") as f_after:
-            file_before = client.files.create(
-                file=f_before,
-                purpose="vision"
-            )
-            file_after = client.files.create(
-                file=f_after,
-                purpose="vision"
-            )
+        print("📤 Fazendo upload das imagens para OpenAI...")
+        print(f"   Before path: {before_path}")
+        print(f"   After path: {after_path}")
+        try:
+            with open(before_path, "rb") as f_before, open(after_path, "rb") as f_after:
+                print("   📎 Uploading before image...")
+                file_before = client.files.create(
+                    file=f_before,
+                    purpose="vision"
+                )
+                print(f"   ✓ Before uploaded: {file_before.id}")
+                
+                print("   📎 Uploading after image...")
+                file_after = client.files.create(
+                    file=f_after,
+                    purpose="vision"
+                )
+                print(f"   ✓ After uploaded: {file_after.id}")
+        except Exception as upload_error:
+            print(f"   ❌ Erro no upload: {upload_error}")
+            raise
         
         # 2. Criar thread
-        thread = client.beta.threads.create()
+        print("🧵 Criando thread...")
+        try:
+            thread = client.beta.threads.create()
+            print(f"   ✓ Thread criada: {thread.id}")
+        except Exception as thread_error:
+            print(f"   ❌ Erro ao criar thread: {thread_error}")
+            raise
         
         # 3. Enviar mensagem com imagens e prompt
-        message = client.beta.threads.messages.create(
+        print("💬 Enviando mensagem com imagens...")
+        try:
+            message = client.beta.threads.messages.create(
             thread_id=thread.id,
             role="user",
             content=[
@@ -147,13 +170,23 @@ Retorne APENAS o JSON, sem texto adicional."""
                     "image_file": {"file_id": file_after.id}
                 }
             ]
-        )
+            )
+            print(f"   ✓ Mensagem enviada: {message.id}")
+        except Exception as message_error:
+            print(f"   ❌ Erro ao enviar mensagem: {message_error}")
+            raise
         
         # 4. Criar e executar run
-        run = client.beta.threads.runs.create(
-            thread_id=thread.id,
-            assistant_id=ASSISTANT_ID
-        )
+        print("▶️ Criando e executando run...")
+        try:
+            run = client.beta.threads.runs.create(
+                thread_id=thread.id,
+                assistant_id=ASSISTANT_ID
+            )
+            print(f"   ✓ Run criado: {run.id}, status: {run.status}")
+        except Exception as run_error:
+            print(f"   ❌ Erro ao criar run: {run_error}")
+            raise
         
         # 5. Aguardar conclusão do run
         max_wait_time = 300  # 5 minutos máximo
