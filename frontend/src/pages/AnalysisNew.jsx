@@ -179,7 +179,7 @@ export default function AnalysisNew() {
       )
 
       // Salvar análise no banco
-      const { data: { user } } = await supabase.auth.getUser()
+      // (user já foi obtido anteriormente, não precisa buscar novamente)
       if (!user) {
         throw new Error('Usuário não autenticado')
       }
