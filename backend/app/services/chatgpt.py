@@ -42,7 +42,12 @@ def analyze_with_chatgpt(before_path, after_path, procedures=None):
         os.environ.pop('http_proxy', None)
         os.environ.pop('https_proxy', None)
         
+        print(f"🔑 Inicializando cliente OpenAI...")
+        print(f"   Token presente: {'Sim' if token else 'Não'}")
+        print(f"   Token length: {len(token) if token else 0}")
+        
         client = OpenAI(api_key=token)
+        print("   ✓ Cliente OpenAI inicializado")
         
         # Construir prompt com procedimentos
         procedures_text = ""
