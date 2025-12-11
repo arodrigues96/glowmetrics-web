@@ -115,22 +115,50 @@ export async function analyzeImages(beforeFile, afterFile, procedures, patientId
   }
   
   // Chamar backend para análise
-  const response = await fetch(`${API_URL}/api/analyze`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      before_image_url: beforeUrl,
-      after_image_url: afterUrl,
-      procedures
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:105',message:'fetch backend before',data:{apiUrl:API_URL,endpoint:'/api/analyze',beforeUrl,afterUrl,proceduresCount:procedures?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+  // #endregion
+  
+  let response;
+  try {
+    response = await fetch(`${API_URL}/api/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        before_image_url: beforeUrl,
+        after_image_url: afterUrl,
+        procedures
+      })
     })
-  })
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:118',message:'fetch backend response',data:{ok:response?.ok,status:response?.status,statusText:response?.statusText,hasResponse:!!response},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+    // #endregion
+  } catch (fetchError) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:122',message:'fetch backend error',data:{error:fetchError?.message,errorName:fetchError?.name,errorStack:fetchError?.stack?.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+    // #endregion
+    throw fetchError
+  }
   
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Erro na análise')
+    let errorData;
+    try {
+      errorData = await response.json()
+    } catch (e) {
+      errorData = { detail: `HTTP ${response.status}: ${response.statusText}` }
+    }
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:132',message:'fetch backend not ok',data:{status:response.status,statusText:response.statusText,errorData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+    // #endregion
+    throw new Error(errorData.detail || 'Erro na análise')
   }
   
   const result = await response.json()
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:138',message:'fetch backend success',data:{hasResult:!!result},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+  // #endregion
   
   // Retornar também os IDs das fotos para usar na análise
   return {
