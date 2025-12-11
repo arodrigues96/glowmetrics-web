@@ -198,8 +198,22 @@ async def analyze_images(request: AnalysisRequest):
 @app.post("/api/generate-pdf")
 async def generate_pdf(request: PDFRequest):
     """Gera PDF a partir dos resultados da análise"""
+    # #region agent log
+    debug_log("main.py:198", "generate_pdf entry", {
+        "before_url": request.before_url,
+        "after_url": request.after_url,
+        "before_url_length": len(request.before_url) if request.before_url else 0,
+        "after_url_length": len(request.after_url) if request.after_url else 0,
+        "before_url_empty": not request.before_url or request.before_url.strip() == "",
+        "after_url_empty": not request.after_url or request.after_url.strip() == "",
+        "has_analysis_results": bool(request.analysis_results)
+    }, "F")
+    # #endregion
     try:
         # Baixar imagens
+        # #region agent log
+        debug_log("main.py:210", "before download_image in generate_pdf", {"before_url": request.before_url, "after_url": request.after_url}, "F")
+        # #endregion
         before_path = download_image(request.before_url)
         after_path = download_image(request.after_url)
         
