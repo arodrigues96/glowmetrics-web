@@ -75,24 +75,34 @@ def download_image(url: str) -> str:
 @app.post("/api/analyze")
 async def analyze_images(request: AnalysisRequest):
     """Analisa imagens usando ChatGPT"""
+    before_path = None
+    after_path = None
     try:
+        print(f"📥 Recebida requisição de análise")
+        print(f"   Before URL: {request.before_image_url[:50]}...")
+        print(f"   After URL: {request.after_image_url[:50]}...")
+        print(f"   Procedimentos: {request.procedures}")
+        
         # Baixar imagens
+        print("⬇️ Baixando imagens...")
         before_path = download_image(request.before_image_url)
+        print(f"   ✓ Before salvo em: {before_path}")
         after_path = download_image(request.after_image_url)
+        print(f"   ✓ After salvo em: {after_path}")
         
         # Analisar com ChatGPT
+        print("🤖 Iniciando análise com ChatGPT...")
         response_text = analyze_with_chatgpt(
             before_path,
             after_path,
             request.procedures
         )
+        print(f"   ✓ Resposta recebida ({len(response_text)} chars)")
         
         # Parsear resposta
+        print("📊 Parseando resposta...")
         analysis_results = parse_chatgpt_response(response_text)
-        
-        # Limpar arquivos temporários
-        os.unlink(before_path)
-        os.unlink(after_path)
+        print("   ✓ Análise parseada com sucesso")
         
         return {
             "success": True,
@@ -100,7 +110,25 @@ async def analyze_images(request: AnalysisRequest):
             "raw_response": response_text
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"❌ ERRO na análise:")
+        print(f"   Tipo: {type(e).__name__}")
+        print(f"   Mensagem: {str(e)}")
+        print(f"   Traceback:\n{error_trace}")
+        raise HTTPException(status_code=500, detail=f"Erro na análise: {str(e)}")
+    finally:
+        # Limpar arquivos temporários
+        if before_path and os.path.exists(before_path):
+            try:
+                os.remove(before_path)
+            except:
+                pass
+        if after_path and os.path.exists(after_path):
+            try:
+                os.remove(after_path)
+            except:
+                pass
 
 @app.post("/api/generate-pdf")
 async def generate_pdf(request: PDFRequest):
