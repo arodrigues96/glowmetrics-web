@@ -66,6 +66,14 @@ export default function AnalysisNew() {
         finalPatientId = newPatient.id
       }
 
+      // Verificar se backend está configurado
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      if (apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1')) {
+        toast.error('Backend não configurado. Configure VITE_API_URL no Vercel com a URL do backend online.')
+        setLoading(false)
+        return
+      }
+
       // Analisar imagens
       toast.info('Analisando imagens...')
       const analysisResult = await analyzeImages(beforeFile, afterFile, procedures, finalPatientId)
