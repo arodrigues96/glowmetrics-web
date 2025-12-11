@@ -67,12 +67,25 @@ export default function AnalysisNew() {
       }
 
       // Verificar se backend está configurado
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-      if (apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1')) {
-        toast.error('Backend não configurado. Configure VITE_API_URL no Vercel com a URL do backend online.')
+      const apiUrl = import.meta.env.VITE_API_URL
+      console.log('🔍 VITE_API_URL:', apiUrl) // Debug
+      
+      if (!apiUrl || apiUrl === 'http://localhost:8000') {
+        console.error('❌ VITE_API_URL não configurada ou ainda é localhost')
+        toast.error('Backend não configurado. Configure VITE_API_URL no Vercel com: https://glowmetrics-backend.onrender.com')
         setLoading(false)
         return
       }
+      
+      const isLocalhost = apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1')
+      if (isLocalhost) {
+        console.error('❌ VITE_API_URL ainda aponta para localhost:', apiUrl)
+        toast.error('Backend não configurado. Configure VITE_API_URL no Vercel com: https://glowmetrics-backend.onrender.com')
+        setLoading(false)
+        return
+      }
+      
+      console.log('✅ Backend URL configurada:', apiUrl)
 
       // Analisar imagens
       toast.info('Analisando imagens...')
