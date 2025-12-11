@@ -34,19 +34,32 @@ def analyze_with_chatgpt(before_path, after_path, procedures=None):
     try:
         # Inicializar cliente OpenAI
         # Versões recentes do openai (1.0+) não aceitam 'proxies' diretamente
-        # Se precisar de proxies, configure via http_client
+        # Precisamos criar um httpx.Client sem proxies para evitar conflitos
         import os
+        import httpx
+        
         # Limpar qualquer variável de ambiente que possa causar conflito
-        os.environ.pop('HTTP_PROXY', None)
-        os.environ.pop('HTTPS_PROXY', None)
-        os.environ.pop('http_proxy', None)
-        os.environ.pop('https_proxy', None)
+        proxy_vars = ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy', 'ALL_PROXY', 'all_proxy']
+        for var in proxy_vars:
+            if var in os.environ:
+                print(f"   🗑️ Removendo variável de proxy: {var}")
+                del os.environ[var]
         
         print(f"🔑 Inicializando cliente OpenAI...")
         print(f"   Token presente: {'Sim' if token else 'Não'}")
         print(f"   Token length: {len(token) if token else 0}")
         
-        client = OpenAI(api_key=token)
+        # Criar httpx.Client sem proxies explicitamente
+        http_client = httpx.Client(
+            timeout=60.0,
+            # Não passar proxies aqui - isso causa o erro
+        )
+        
+        # Criar cliente OpenAI com http_client customizado
+        client = OpenAI(
+            api_key=token,
+            http_client=http_client
+        )
         print("   ✓ Cliente OpenAI inicializado")
         
         # Construir prompt com procedimentos
