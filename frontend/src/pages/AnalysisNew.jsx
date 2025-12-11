@@ -68,7 +68,7 @@ export default function AnalysisNew() {
 
       // Analisar imagens
       toast.info('Analisando imagens...')
-      const analysisResult = await analyzeImages(beforeFile, afterFile, procedures)
+      const analysisResult = await analyzeImages(beforeFile, afterFile, procedures, finalPatientId)
 
       // Gerar PDF
       toast.info('Gerando PDF...')
@@ -80,11 +80,17 @@ export default function AnalysisNew() {
 
       // Salvar análise no banco
       const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('Usuário não autenticado')
+      }
+      
       const { data: analysis, error: analysisError } = await supabase
         .from('analyses')
         .insert({
           patient_id: finalPatientId,
           user_id: user.id,
+          before_photo_id: analysisResult.before_photo_id,
+          after_photo_id: analysisResult.after_photo_id,
           procedures,
           chatgpt_response: analysisResult.analysis,
           pdf_path: pdfResult.pdf_base64,
