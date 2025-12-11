@@ -90,12 +90,48 @@ export default function AnalysisNew() {
       // Analisar imagens
       toast.info('Analisando imagens...')
       const analysisResult = await analyzeImages(beforeFile, afterFile, procedures, finalPatientId)
+      
+      // Obter URLs das imagens do Supabase Storage para gerar PDF
+      // (as URLs não vêm na resposta do backend, precisamos obtê-las novamente)
+      const { supabase } = await import('../lib/supabase')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Usuário não autenticado')
+      
+      // Buscar as fotos mais recentes deste paciente
+      const { data: photos, error: photosError } = await supabase
+        .from('photos')
+        .select('storage_path, photo_type')
+        .eq('user_id', user.id)
+        .eq('patient_id', finalPatientId)
+        .order('created_at', { ascending: false })
+        .limit(2)
+      
+      if (photosError) throw photosError
+      
+      const beforePhoto = photos?.find(p => p.photo_type === 'before')
+      const afterPhoto = photos?.find(p => p.photo_type === 'after')
+      
+      if (!beforePhoto || !afterPhoto) {
+        throw new Error('Fotos não encontradas para gerar PDF')
+      }
+      
+      const { data: { publicUrl: beforeUrl } } = supabase.storage
+        .from('photos')
+        .getPublicUrl(beforePhoto.storage_path)
+      
+      const { data: { publicUrl: afterUrl } } = supabase.storage
+        .from('photos')
+        .getPublicUrl(afterPhoto.storage_path)
+      
+      if (!beforeUrl || !afterUrl) {
+        throw new Error('URLs das fotos não encontradas')
+      }
 
       // Gerar PDF
       toast.info('Gerando PDF...')
       const pdfResult = await generatePDF(
-        analysisResult.analysis.before_url || '',
-        analysisResult.analysis.after_url || '',
+        beforeUrl,
+        afterUrl,
         analysisResult.analysis
       )
 

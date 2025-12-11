@@ -43,6 +43,16 @@ export async function analyzeImages(beforeFile, afterFile, procedures, patientId
     .from('photos')
     .getPublicUrl(afterFileName)
   
+  // Validar URLs
+  if (!beforeUrl || beforeUrl.trim() === '') {
+    throw new Error('URL da foto antes está vazia')
+  }
+  if (!afterUrl || afterUrl.trim() === '') {
+    throw new Error('URL da foto depois está vazia')
+  }
+  
+  console.log('📸 URLs obtidas:', { beforeUrl, afterUrl })
+  
   // Salvar fotos na tabela photos (para RLS)
   const { data: beforePhoto, error: beforePhotoError } = await supabase
     .from('photos')
