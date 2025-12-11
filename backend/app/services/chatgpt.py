@@ -32,6 +32,16 @@ def analyze_with_chatgpt(before_path, after_path, procedures=None):
         raise Exception("Token OpenAI não encontrado. Configure 'open_ai_token' no arquivo .env")
     
     try:
+        # Inicializar cliente OpenAI
+        # Versões recentes do openai (1.0+) não aceitam 'proxies' diretamente
+        # Se precisar de proxies, configure via http_client
+        import os
+        # Limpar qualquer variável de ambiente que possa causar conflito
+        os.environ.pop('HTTP_PROXY', None)
+        os.environ.pop('HTTPS_PROXY', None)
+        os.environ.pop('http_proxy', None)
+        os.environ.pop('https_proxy', None)
+        
         client = OpenAI(api_key=token)
         
         # Construir prompt com procedimentos
