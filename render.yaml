@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: glowmetrics-backend
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && python -m app.main
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+
