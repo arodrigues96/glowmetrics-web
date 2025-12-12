@@ -3,10 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Download } from 'lucide-react'
+import { useMemo, useEffect, useState } from 'react'
 
 export default function AnalysisView() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [pdfUrl, setPdfUrl] = useState(null)
 
   const { data: analysis, isLoading } = useQuery({
     queryKey: ['analysis', id],
@@ -21,6 +23,35 @@ export default function AnalysisView() {
       return data
     },
   })
+
+  // Converter base64 para Blob URL para visualização
+  useEffect(() => {
+    if (analysis?.pdf_path) {
+      try {
+        // Converter base64 para binário
+        const binaryString = atob(analysis.pdf_path)
+        const bytes = new Uint8Array(binaryString.length)
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i)
+        }
+        
+        // Criar Blob e URL
+        const blob = new Blob([bytes], { type: 'application/pdf' })
+        const url = URL.createObjectURL(blob)
+        setPdfUrl(url)
+        
+        // Limpar URL quando componente desmontar
+        return () => {
+          if (url) {
+            URL.revokeObjectURL(url)
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao criar blob URL:', error)
+        setPdfUrl(null)
+      }
+    }
+  }, [analysis?.pdf_path])
 
   const handleDownload = () => {
     if (analysis?.pdf_path) {
@@ -75,12 +106,21 @@ export default function AnalysisView() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-xl shadow-md border border-rose-100 p-6">
-          {analysis.pdf_path && (
+          {pdfUrl ? (
             <iframe
-              src={`data:application/pdf;base64,${analysis.pdf_path}`}
+              src={pdfUrl}
               className="w-full h-screen border-0 rounded-lg"
               title="PDF Viewer"
+              type="application/pdf"
             />
+          ) : analysis.pdf_path ? (
+            <div className="flex items-center justify-center h-screen">
+              <div className="text-gray-500">Carregando PDF...</div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-screen">
+              <div className="text-gray-500">PDF não disponível</div>
+            </div>
           )}
         </div>
       </main>
