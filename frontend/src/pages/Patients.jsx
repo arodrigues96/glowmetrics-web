@@ -1,11 +1,13 @@
 // Patients.jsx - Lista de pacientes
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { useQuery } from '@tanstack/react-query'
-import { Plus, ArrowLeft } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Plus, ArrowLeft, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function Patients() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const { data: patients, isLoading } = useQuery({
     queryKey: ['patients'],
@@ -21,6 +23,30 @@ export default function Patients() {
       return data
     },
   })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (patientId) => {
+      const { error } = await supabase
+        .from('patients')
+        .delete()
+        .eq('id', patientId)
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patients'] })
+      toast.success('Paciente removido com sucesso!')
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao remover paciente')
+    },
+  })
+
+  const handleDelete = async (patientId, patientName) => {
+    if (window.confirm(`Tem certeza que deseja remover o paciente "${patientName}"?\n\nEsta ação não pode ser desfeita e também removerá todas as análises e fotos relacionadas.`)) {
+      deleteMutation.mutate(patientId)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-rose-50">
@@ -56,7 +82,17 @@ export default function Patients() {
                 key={patient.id}
                 className="bg-white rounded-xl p-6 shadow-md border border-rose-100 hover:shadow-lg transition-shadow"
               >
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">{patient.name}</h3>
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-semibold text-gray-800">{patient.name}</h3>
+                  <button
+                    onClick={() => handleDelete(patient.id, patient.name)}
+                    disabled={deleteMutation.isPending}
+                    className="text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                    title="Remover paciente"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
                 <button
                   onClick={() => navigate(`/analysis/new?patientId=${patient.id}`)}
                   className="w-full bg-rose-500 text-white py-2 px-4 rounded-lg hover:bg-rose-600 transition-colors"
