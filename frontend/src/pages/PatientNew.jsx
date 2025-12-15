@@ -7,8 +7,7 @@ import { ArrowLeft } from 'lucide-react'
 
 export default function PatientNew() {
   const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
+  const [gender, setGender] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
@@ -22,8 +21,7 @@ export default function PatientNew() {
       .from('patients')
       .insert({
         name,
-        email: email || null,
-        phone: phone || null,
+        gender: gender || null,
         user_id: user.id,
       })
 
@@ -74,28 +72,17 @@ export default function PatientNew() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
+                Sexo
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
                 className="w-full px-4 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                placeholder="email@exemplo.com"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Telefone
-              </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-4 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                placeholder="(00) 00000-0000"
-              />
+              >
+                <option value="">Selecione...</option>
+                <option value="masculino">Masculino</option>
+                <option value="feminino">Feminino</option>
+              </select>
             </div>
 
             <div className="flex space-x-4">

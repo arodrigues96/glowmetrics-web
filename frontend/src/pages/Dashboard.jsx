@@ -83,9 +83,6 @@ export default function Dashboard() {
                   className="p-4 border border-rose-100 rounded-lg hover:bg-rose-50 cursor-pointer transition-colors"
                 >
                   <h3 className="font-medium text-gray-800">{patient.name}</h3>
-                  {patient.email && (
-                    <p className="text-sm text-gray-600">{patient.email}</p>
-                  )}
                 </div>
               ))}
             </div>

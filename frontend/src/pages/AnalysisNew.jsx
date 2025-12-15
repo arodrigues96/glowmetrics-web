@@ -7,7 +7,16 @@ import { analyzeImages, generatePDF } from '../lib/api'
 import { toast } from 'sonner'
 import { ArrowLeft, Upload } from 'lucide-react'
 
-const PROCEDURES = ['Botox', 'Preenchimento', 'Peeling']
+const PROCEDURES = [
+  'Botox',
+  'Preenchimento labial',
+  'Preenchimento de olheiras',
+  'Peeling',
+  'Microagulhamento',
+  'Lipo de papada',
+  'Preenchimento queixo/malar',
+  'PDRN'
+]
 
 export default function AnalysisNew() {
   const [searchParams] = useSearchParams()
@@ -218,7 +227,18 @@ export default function AnalysisNew() {
         <div className="bg-white rounded-xl shadow-md border border-rose-100 p-8">
           <h1 className="text-2xl font-bold text-gray-800 mb-6">Nova Análise</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {(!patients || patients.length === 0) ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 mb-6">Você precisa cadastrar um paciente antes de criar uma análise.</p>
+              <button
+                onClick={() => navigate('/patients/new')}
+                className="bg-rose-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-rose-600 transition-colors"
+              >
+                Criar novo paciente
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
             {/* Seleção de paciente */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -341,6 +361,7 @@ export default function AnalysisNew() {
               {loading ? 'Processando...' : 'Analisar'}
             </button>
           </form>
+          )}
         </div>
       </main>
     </div>

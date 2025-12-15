@@ -56,13 +56,7 @@ export default function Patients() {
                 key={patient.id}
                 className="bg-white rounded-xl p-6 shadow-md border border-rose-100 hover:shadow-lg transition-shadow"
               >
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">{patient.name}</h3>
-                {patient.email && (
-                  <p className="text-sm text-gray-600 mb-1">{patient.email}</p>
-                )}
-                {patient.phone && (
-                  <p className="text-sm text-gray-600 mb-4">{patient.phone}</p>
-                )}
+                <h3 className="text-xl font-semibold text-gray-800 mb-4">{patient.name}</h3>
                 <button
                   onClick={() => navigate(`/analysis/new?patientId=${patient.id}`)}
                   className="w-full bg-rose-500 text-white py-2 px-4 rounded-lg hover:bg-rose-600 transition-colors"
