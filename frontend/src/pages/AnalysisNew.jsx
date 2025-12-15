@@ -97,10 +97,6 @@ export default function AnalysisNew() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Usuário não autenticado')
       
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AnalysisNew.jsx:94',message:'before fetching photos',data:{beforePhotoId:analysisResult.before_photo_id,afterPhotoId:analysisResult.after_photo_id,patientId:finalPatientId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-      // #endregion
-      
       // Buscar as fotos usando os IDs retornados pela análise
       let beforePhoto, afterPhoto
       
@@ -141,10 +137,6 @@ export default function AnalysisNew() {
         afterPhoto = photos?.find(p => p.photo_type === 'after')
       }
       
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AnalysisNew.jsx:125',message:'photos found',data:{hasBeforePhoto:!!beforePhoto,hasAfterPhoto:!!afterPhoto,beforeStoragePath:beforePhoto?.storage_path,afterStoragePath:afterPhoto?.storage_path},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-      // #endregion
-      
       if (!beforePhoto || !afterPhoto) {
         throw new Error('Fotos não encontradas para gerar PDF')
       }
@@ -160,10 +152,6 @@ export default function AnalysisNew() {
       const { data: { publicUrl: afterUrl } } = supabase.storage
         .from('photos')
         .getPublicUrl(afterPhoto.storage_path)
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/e2db86f0-3e51-4fba-8d95-27a01cf275ef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AnalysisNew.jsx:145',message:'URLs obtained',data:{beforeUrl,beforeUrlLength:beforeUrl?.length||0,afterUrl,afterUrlLength:afterUrl?.length||0,beforeUrlEmpty:!beforeUrl||beforeUrl.trim()==='',afterUrlEmpty:!afterUrl||afterUrl.trim()===''},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-      // #endregion
       
       if (!beforeUrl || !afterUrl || beforeUrl.trim() === '' || afterUrl.trim() === '') {
         console.error('URLs obtidas:', { beforeUrl, afterUrl, beforeStoragePath: beforePhoto.storage_path, afterStoragePath: afterPhoto.storage_path })

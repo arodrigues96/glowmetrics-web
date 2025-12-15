@@ -1,29 +1,9 @@
 # chatgpt.py - Serviço de análise com ChatGPT
 import os
-import time
 import warnings
-import json
 from dotenv import load_dotenv
 
 warnings.filterwarnings('ignore', category=DeprecationWarning)
-
-# #region agent log
-def debug_log(location, message, data, hypothesis_id=None):
-    try:
-        log_entry = {
-            "location": location,
-            "message": message,
-            "data": data,
-            "timestamp": int(time.time() * 1000),
-            "sessionId": "debug-session",
-            "runId": "run1",
-            "hypothesisId": hypothesis_id
-        }
-        with open("/mnt/c/Users/conta/Desktop/git-repos/.cursor/debug.log", "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
-    except:
-        pass
-# #endregion
 
 try:
     from openai import OpenAI
@@ -51,90 +31,34 @@ def analyze_with_chatgpt(before_path, after_path, procedures=None):
         raise Exception("Token OpenAI não encontrado. Configure 'open_ai_token' no arquivo .env")
     
     try:
-        # #region agent log
-        debug_log("chatgpt.py:34", "analyze_with_chatgpt entry", {"has_token": bool(token), "token_len": len(token) if token else 0, "procedures": procedures}, "A")
-        # #endregion
-        
         # Inicializar cliente OpenAI
         # Versões recentes do openai (1.0+) não aceitam 'proxies' diretamente
         # Precisamos criar um httpx.Client sem proxies para evitar conflitos
-        import os
         import httpx
         
-        # #region agent log
-        # Check versions (Hypothesis B, E)
-        try:
-            import httpx as httpx_module
-            import openai as openai_module
-            httpx_version = getattr(httpx_module, '__version__', 'unknown')
-            openai_version = getattr(openai_module, '__version__', 'unknown')
-            debug_log("chatgpt.py:42", "package versions", {"httpx_version": httpx_version, "openai_version": openai_version}, "B")
-        except Exception as verr:
-            debug_log("chatgpt.py:45", "version check error", {"error": str(verr)}, "B")
-        # #endregion
-        
-        # #region agent log
-        # Check environment variables (Hypothesis C)
-        proxy_vars = ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy', 'ALL_PROXY', 'all_proxy']
-        env_proxies = {var: os.environ.get(var) for var in proxy_vars if os.environ.get(var)}
-        debug_log("chatgpt.py:48", "environment proxy vars before cleanup", {"found_proxies": env_proxies}, "C")
-        # #endregion
-        
         # Limpar qualquer variável de ambiente que possa causar conflito
+        proxy_vars = ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy', 'ALL_PROXY', 'all_proxy']
         for var in proxy_vars:
             if var in os.environ:
                 print(f"   🗑️ Removendo variável de proxy: {var}")
                 del os.environ[var]
         
-        # #region agent log
-        env_proxies_after = {var: os.environ.get(var) for var in proxy_vars if os.environ.get(var)}
-        debug_log("chatgpt.py:55", "environment proxy vars after cleanup", {"found_proxies": env_proxies_after}, "C")
-        # #endregion
-        
         print(f"🔑 Inicializando cliente OpenAI...")
         print(f"   Token presente: {'Sim' if token else 'Não'}")
         print(f"   Token length: {len(token) if token else 0}")
         
-        # #region agent log
-        # Check httpx.Client creation (Hypothesis D)
-        debug_log("chatgpt.py:62", "before httpx.Client creation", {"timeout": 60.0}, "D")
-        # #endregion
-        
         # Criar httpx.Client sem proxies explicitamente
-        try:
-            http_client = httpx.Client(
-                timeout=60.0,
-                # Não passar proxies aqui - isso causa o erro
-            )
-            # #region agent log
-            debug_log("chatgpt.py:70", "httpx.Client created successfully", {"client_type": type(http_client).__name__}, "D")
-            # #endregion
-        except Exception as httpx_err:
-            # #region agent log
-            debug_log("chatgpt.py:73", "httpx.Client creation failed", {"error": str(httpx_err), "error_type": type(httpx_err).__name__}, "D")
-            # #endregion
-            raise
-        
-        # #region agent log
-        # Check OpenAI client creation (Hypothesis A, D)
-        debug_log("chatgpt.py:78", "before OpenAI client creation", {"has_http_client": http_client is not None, "http_client_type": type(http_client).__name__ if http_client else None}, "A")
-        # #endregion
+        http_client = httpx.Client(
+            timeout=60.0,
+            # Não passar proxies aqui - isso causa o erro
+        )
         
         # Criar cliente OpenAI com http_client customizado
-        try:
-            client = OpenAI(
-                api_key=token,
-                http_client=http_client
-            )
-            # #region agent log
-            debug_log("chatgpt.py:87", "OpenAI client created successfully", {"client_type": type(client).__name__}, "A")
-            # #endregion
-            print("   ✓ Cliente OpenAI inicializado")
-        except Exception as openai_err:
-            # #region agent log
-            debug_log("chatgpt.py:91", "OpenAI client creation failed", {"error": str(openai_err), "error_type": type(openai_err).__name__, "traceback": str(openai_err.__traceback__) if hasattr(openai_err, '__traceback__') else None}, "A")
-            # #endregion
-            raise
+        client = OpenAI(
+            api_key=token,
+            http_client=http_client
+        )
+        print("   ✓ Cliente OpenAI inicializado")
         
         # Construir prompt com procedimentos
         print("📝 Construindo prompt...")

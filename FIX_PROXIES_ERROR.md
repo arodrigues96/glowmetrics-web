@@ -42,3 +42,4 @@ O código agora limpa automaticamente variáveis de proxy do ambiente antes de i
 
 Teste novamente fazendo uma análise. O erro deve desaparecer.
 
+

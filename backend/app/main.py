@@ -7,8 +7,6 @@ import os
 import tempfile
 import base64
 import requests
-import json
-import time
 from dotenv import load_dotenv
 
 from app.services.chatgpt import analyze_with_chatgpt
@@ -16,24 +14,6 @@ from app.services.parse import parse_chatgpt_response
 from app.services.pdf import make_clinic_pdf
 
 load_dotenv()
-
-# #region agent log
-def debug_log(location, message, data, hypothesis_id=None):
-    try:
-        log_entry = {
-            "location": location,
-            "message": message,
-            "data": data,
-            "timestamp": int(time.time() * 1000),
-            "sessionId": "debug-session",
-            "runId": "run1",
-            "hypothesisId": hypothesis_id
-        }
-        with open("/mnt/c/Users/conta/Desktop/git-repos/.cursor/debug.log", "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
-    except:
-        pass
-# #endregion
 
 app = FastAPI(title="GlowMetrics Analysis API")
 
@@ -84,39 +64,19 @@ class PDFRequest(BaseModel):
 
 def download_image(url: str) -> str:
     """Baixa imagem de URL e salva temporariamente"""
-    # #region agent log
-    debug_log("main.py:65", "download_image entry", {"url": url, "url_length": len(url) if url else 0, "url_empty": not url or url.strip() == ""}, "F")
-    # #endregion
-    
     if not url or url.strip() == "":
-        # #region agent log
-        debug_log("main.py:69", "download_image empty URL error", {"url": url}, "F")
-        # #endregion
         raise ValueError(f"URL vazia ou inválida: '{url}'")
-    
-    # #region agent log
-    debug_log("main.py:73", "before requests.get", {"url": url, "url_type": type(url).__name__}, "F")
-    # #endregion
     
     try:
         response = requests.get(url)
-        # #region agent log
-        debug_log("main.py:77", "requests.get response", {"status_code": response.status_code, "content_length": len(response.content) if response.content else 0}, "F")
-        # #endregion
         response.raise_for_status()
         
         # Criar arquivo temporário
         with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp:
             tmp.write(response.content)
             file_path = tmp.name
-            # #region agent log
-            debug_log("main.py:84", "download_image success", {"file_path": file_path, "file_size": len(response.content)}, "F")
-            # #endregion
             return file_path
     except Exception as e:
-        # #region agent log
-        debug_log("main.py:88", "download_image error", {"error": str(e), "error_type": type(e).__name__, "url": url}, "F")
-        # #endregion
         raise
 
 @app.post("/api/analyze")
@@ -125,18 +85,6 @@ async def analyze_images(request: AnalysisRequest):
     before_path = None
     after_path = None
     try:
-        # #region agent log
-        debug_log("main.py:95", "analyze_images entry", {
-            "before_url": request.before_image_url,
-            "after_url": request.after_image_url,
-            "before_url_length": len(request.before_image_url) if request.before_image_url else 0,
-            "after_url_length": len(request.after_image_url) if request.after_image_url else 0,
-            "before_url_empty": not request.before_image_url or request.before_image_url.strip() == "",
-            "after_url_empty": not request.after_image_url or request.after_image_url.strip() == "",
-            "procedures": request.procedures
-        }, "F")
-        # #endregion
-        
         print(f"📥 Recebida requisição de análise")
         print(f"   Before URL: {request.before_image_url[:50] if request.before_image_url else 'VAZIA'}...")
         print(f"   After URL: {request.after_image_url[:50] if request.after_image_url else 'VAZIA'}...")
@@ -144,14 +92,8 @@ async def analyze_images(request: AnalysisRequest):
         
         # Baixar imagens
         print("⬇️ Baixando imagens...")
-        # #region agent log
-        debug_log("main.py:112", "before download_image before", {"url": request.before_image_url}, "F")
-        # #endregion
         before_path = download_image(request.before_image_url)
         print(f"   ✓ Before salvo em: {before_path}")
-        # #region agent log
-        debug_log("main.py:116", "before download_image after", {"url": request.after_image_url}, "F")
-        # #endregion
         after_path = download_image(request.after_image_url)
         print(f"   ✓ After salvo em: {after_path}")
         
@@ -198,22 +140,8 @@ async def analyze_images(request: AnalysisRequest):
 @app.post("/api/generate-pdf")
 async def generate_pdf(request: PDFRequest):
     """Gera PDF a partir dos resultados da análise"""
-    # #region agent log
-    debug_log("main.py:198", "generate_pdf entry", {
-        "before_url": request.before_url,
-        "after_url": request.after_url,
-        "before_url_length": len(request.before_url) if request.before_url else 0,
-        "after_url_length": len(request.after_url) if request.after_url else 0,
-        "before_url_empty": not request.before_url or request.before_url.strip() == "",
-        "after_url_empty": not request.after_url or request.after_url.strip() == "",
-        "has_analysis_results": bool(request.analysis_results)
-    }, "F")
-    # #endregion
     try:
         # Baixar imagens
-        # #region agent log
-        debug_log("main.py:210", "before download_image in generate_pdf", {"before_url": request.before_url, "after_url": request.after_url}, "F")
-        # #endregion
         before_path = download_image(request.before_url)
         after_path = download_image(request.after_url)
         
