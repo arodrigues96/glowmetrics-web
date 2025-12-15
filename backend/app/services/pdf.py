@@ -247,15 +247,6 @@ def make_clinic_pdf(before_path, after_path, analysis_results, out_pdf):
     c.drawCentredString(card_x2 + card_w/2, card_y + card_h - 18, "Depois")
     img_x2 = card_x2 + (card_w - img_w) / 2
     c.drawImage(after_path, img_x2, img_y, width=img_w, height=img_h, preserveAspectRatio=True, mask='auto')
-    global_data = analysis_results.get("global", {})
-    metrics_x = card_x2 + card_w + 25
-    metrics_w = w - metrics_x - 30
-    metric_h = 78
-    age_data = global_data.get("apparent_age", {})
-    age_after = age_data.get("after", 35)
-    age_red = age_data.get("reduction", 0)
-    draw_metric_card_clinic(c, metrics_x, card_y + card_h/2 - metric_h/2, metrics_w, metric_h,
-                           "Idade Aparente*", f"{int(age_after)}", "anos", -int(age_red) if age_red > 0 else None, P.GOLD, P)
     y_pos = card_y - 28
     c.setFillColor(P.ROSE_DARK)
     c.setFont("Helvetica-Bold", 11)
@@ -343,51 +334,6 @@ def make_clinic_pdf(before_path, after_path, analysis_results, out_pdf):
             config["color"], P, description, score
         )
         y_pos -= card_h + 10
-    y_pos -= 8
-    overall_scores = []
-    for area_data in areas_data.values():
-        if "overall_score" in area_data:
-            overall_scores.append(area_data["overall_score"])
-    avg_improvement = sum(overall_scores) / len(overall_scores) if overall_scores else 0
-    if avg_improvement >= 25:
-        general_score = "A"
-        general_msg = "Excelentes resultados nas áreas tratadas"
-    elif avg_improvement >= 15:
-        general_score = "B"
-        general_msg = "Muito bons resultados identificados"
-    elif avg_improvement >= 8:
-        general_score = "C"
-        general_msg = "Bons resultados nas regiões analisadas"
-    elif avg_improvement >= 0:
-        general_score = "D"
-        general_msg = "Resultados em estabilização"
-    elif avg_improvement >= -10:
-        general_score = "E"
-        general_msg = "Verifique a ordem das imagens antes/depois"
-    else:
-        general_score = "F"
-        general_msg = "Consulte seu profissional para avaliação"
-    general_color = get_score_color(general_score, P)
-    result_h = 58
-    c.setFillColor(P.BG_ACCENT)
-    c.setStrokeColor(general_color)
-    c.setLineWidth(1.5)
-    c.roundRect(30, y_pos - result_h, w - 60, result_h, 12, fill=1, stroke=1)
-    c.setFillColor(general_color)
-    c.circle(60, y_pos - result_h/2, 16, fill=1, stroke=0)
-    c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 16)
-    c.drawCentredString(60, y_pos - result_h/2 - 5, general_score)
-    c.setFillColor(P.TEXT_DARK)
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(88, y_pos - 22, "Resultado Geral")
-    c.setFillColor(P.TEXT_MEDIUM)
-    c.setFont("Helvetica", 9)
-    c.drawString(88, y_pos - 40, general_msg)
-    c.setFillColor(general_color)
-    c.setFont("Helvetica-Bold", 18)
-    score_text = {"A": "Excelente", "B": "Muito Bom", "C": "Bom", "D": "Estável", "E": "Atenção", "F": "Verificar"}.get(general_score, "")
-    c.drawRightString(w - 50, y_pos - 32, score_text)
     c.setStrokeColor(P.GOLD)
     c.setLineWidth(0.8)
     c.line(30, 62, w - 30, 62)
