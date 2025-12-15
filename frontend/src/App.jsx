@@ -10,6 +10,7 @@ import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Patients from './pages/Patients'
 import PatientNew from './pages/PatientNew'
+import PatientDetail from './pages/PatientDetail'
 import AnalysisNew from './pages/AnalysisNew'
 import AnalysisView from './pages/AnalysisView'
 
@@ -71,6 +72,14 @@ function App() {
             element={
               <PrivateRoute>
                 <PatientNew />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/patients/:id"
+            element={
+              <PrivateRoute>
+                <PatientDetail />
               </PrivateRoute>
             }
           />

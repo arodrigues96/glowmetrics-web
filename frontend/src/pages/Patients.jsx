@@ -93,12 +93,20 @@ export default function Patients() {
                     <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
-                <button
-                  onClick={() => navigate(`/analysis/new?patientId=${patient.id}`)}
-                  className="w-full bg-rose-500 text-white py-2 px-4 rounded-lg hover:bg-rose-600 transition-colors"
-                >
-                  Nova Análise
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => navigate(`/patients/${patient.id}`)}
+                    className="w-full bg-rose-100 text-rose-600 py-2 px-4 rounded-lg hover:bg-rose-200 transition-colors"
+                  >
+                    Ver Histórico
+                  </button>
+                  <button
+                    onClick={() => navigate(`/analysis/new?patientId=${patient.id}`)}
+                    className="w-full bg-rose-500 text-white py-2 px-4 rounded-lg hover:bg-rose-600 transition-colors"
+                  >
+                    Nova Análise
+                  </button>
+                </div>
               </div>
             ))}
           </div>

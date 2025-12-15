@@ -162,20 +162,12 @@ def draw_region_card_clinic(c, x, y, w_card, title, subtitle, metrics, data, col
     c.setFillColor(color)
     c.roundRect(x, y - h_card + 8, 4, h_card - 16, 2, fill=1, stroke=0)
     
-    # Score no canto superior direito, alinhado com o título
-    score_x = x + w_card - 32  # Posição X bem à direita
-    score_y = y - 18  # Alinhado com o título
+    # Score como texto pequeno no canto superior direito, alinhado com o título
     score_color = get_score_color(score, P)
+    score_label = {"A": "Excelente", "B": "Muito Bom", "C": "Bom", "D": "Estável", "E": "Atenção", "F": "Verificar"}.get(score, "")
     c.setFillColor(score_color)
-    c.setFillAlpha(0.15)
-    c.circle(score_x, score_y, 18, fill=1, stroke=0)
-    c.setFillAlpha(1)
-    c.setStrokeColor(score_color)
-    c.setLineWidth(2)
-    c.circle(score_x, score_y, 14, fill=0, stroke=1)
-    c.setFillColor(score_color)
-    c.setFont("Helvetica-Bold", 14)
-    c.drawCentredString(score_x, score_y - 5, score)
+    c.setFont("Helvetica-Bold", 8)
+    c.drawRightString(x + w_card - 18, y - 18, score_label)
     
     c.setFillColor(P.TEXT_DARK)
     c.setFont("Helvetica-Bold", 11)
@@ -205,10 +197,6 @@ def draw_region_card_clinic(c, x, y, w_card, title, subtitle, metrics, data, col
     for line in subtitle_lines:
         subtitle_text.textLine(line)
     c.drawText(subtitle_text)
-    c.setFillColor(score_color)
-    c.setFont("Helvetica-Bold", 10)
-    score_label = {"A": "Excelente", "B": "Muito Bom", "C": "Bom", "D": "Estável", "E": "Atenção", "F": "Verificar"}.get(score, "")
-    c.drawRightString(x + w_card - 18, y - 35, score_label)
     return h_card
 
 def make_clinic_pdf(before_path, after_path, analysis_results, out_pdf):
