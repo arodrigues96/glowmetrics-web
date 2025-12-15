@@ -144,7 +144,8 @@ def wrap_text(c, text, max_width, font_name, font_size):
 def draw_region_card_clinic(c, x, y, w_card, title, subtitle, metrics, data, color, P, description="", score=""):
     """Desenha card de análise por região - estilo clínica com score A-E"""
     text_start_x = x + 60
-    text_end_x = x + w_card - 18
+    # Score fica no canto direito, então texto deve terminar antes dele (deixar ~50px de margem)
+    text_end_x = x + w_card - 50
     text_width = text_end_x - text_start_x
     title_lines = wrap_text(c, title, text_width, "Helvetica-Bold", 11)
     desc_lines = wrap_text(c, description, text_width, "Helvetica-Oblique", 9)
@@ -160,17 +161,22 @@ def draw_region_card_clinic(c, x, y, w_card, title, subtitle, metrics, data, col
     c.roundRect(x, y - h_card, w_card, h_card, 12, fill=1, stroke=1)
     c.setFillColor(color)
     c.roundRect(x, y - h_card + 8, 4, h_card - 16, 2, fill=1, stroke=0)
+    
+    # Score no canto superior direito, alinhado com o título
+    score_x = x + w_card - 32  # Posição X bem à direita
+    score_y = y - 18  # Alinhado com o título
     score_color = get_score_color(score, P)
     c.setFillColor(score_color)
     c.setFillAlpha(0.15)
-    c.circle(x + 32, y - h_card/2, 18, fill=1, stroke=0)
+    c.circle(score_x, score_y, 18, fill=1, stroke=0)
     c.setFillAlpha(1)
     c.setStrokeColor(score_color)
     c.setLineWidth(2)
-    c.circle(x + 32, y - h_card/2, 14, fill=0, stroke=1)
+    c.circle(score_x, score_y, 14, fill=0, stroke=1)
     c.setFillColor(score_color)
     c.setFont("Helvetica-Bold", 14)
-    c.drawCentredString(x + 32, y - h_card/2 - 5, score)
+    c.drawCentredString(score_x, score_y - 5, score)
+    
     c.setFillColor(P.TEXT_DARK)
     c.setFont("Helvetica-Bold", 11)
     title_text = c.beginText(text_start_x, y - 18)
