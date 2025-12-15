@@ -1,5 +1,6 @@
 # chatgpt.py - Serviço de análise com ChatGPT
 import os
+import time
 import warnings
 from dotenv import load_dotenv
 
